@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .calculator {
+            background: #fff;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 320px;
+        }
+
+        .display {
+            background: #2d3748;
+            color: #fff;
+            font-size: 2.5rem;
+            padding: 20px;
+            text-align: right;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            min-height: 80px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            padding: 20px;
+            font-size: 1.5rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .number, .decimal {
+            background: #f7fafc;
+            color: #2d3748;
+        }
+
+        .number:hover, .decimal:hover {
+            background: #e2e8f0;
+        }
+
+        .operator {
+            background: #667eea;
+            color: #fff;
+        }
+
+        .operator:hover {
+            background: #5568d3;
+        }
+
+        .equals {
+            background: #48bb78;
+            color: #fff;
+            grid-column: span 2;
+        }
+
+        .equals:hover {
+            background: #38a169;
+        }
+
+        .clear {
+            background: #f56565;
+            color: #fff;
+            grid-column: span 2;
+        }
+
+        .clear:hover {
+            background: #e53e3e;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display" id="display">0</div>
+        <div class="buttons">
+            <button class="clear" onclick="clearDisplay()">AC</button>
+            <button class="operator" onclick="appendOperator('/')">/</button>
+            <button class="operator" onclick="appendOperator('*')">×</button>
+            
+            <button class="number" onclick="appendNumber('7')">7</button>
+            <button class="number" onclick="appendNumber('8')">8</button>
+            <button class="number" onclick="appendNumber('9')">9</button>
+            <button class="operator" onclick="appendOperator('-')">-</button>
+            
+            <button class="number" onclick="appendNumber('4')">4</button>
+            <button class="number" onclick="appendNumber('5')">5</button>
+            <button class="number" onclick="appendNumber('6')">6</button>
+            <button class="operator" onclick="appendOperator('+')">+</button>
+            
+            <button class="number" onclick="appendNumber('1')">1</button>
+            <button class="number" onclick="appendNumber('2')">2</button>
+            <button class="number" onclick="appendNumber('3')">3</button>
+            <button class="equals" onclick="calculate()">=</button>
+            
+            <button class="number" onclick="appendNumber('0')" style="grid-column: span 2;">0</button>
+            <button class="decimal" onclick="appendDecimal()">.</button>
+        </div>
+    </div>
+
+    <script>
+        let display = document.getElementById('display');
+        let expression = '0';
+        let justCalculated = false;
+
+        function updateDisplay() {
+            display.textContent = expression;
+        }
+
+        function appendNumber(num) {
+            // If starting fresh after a result
+            if (justCalculated) {
+                expression = num;
+                justCalculated = false;
+            } else {
+                // Replace initial 0 or append to expression
+                if (expression === '0') {
+                    expression = num;
+                } else {
+                    expression += num;
+                }
+            }
+            updateDisplay();
+        }
+
+        function appendDecimal() {
+            // If starting fresh after a result
+            if (justCalculated) {
+                expression = '0.';
+                justCalculated = false;
+            } else {
+                // Check the current number being typed
+                let parts = expression.split(/[\+\-\*\/×]/);
+                let lastNumber = parts[parts.length - 1].trim();
+                
+                // Only add decimal if current number doesn't have one
+                if (!lastNumber.includes('.')) {
+                    if (expression === '0' || expression.match(/[\+\-\*\/×]\s*$/)) {
+                        expression += '0.';
+                    } else {
+                        expression += '.';
+                    }
+                }
+            }
+            updateDisplay();
+        }
+
+        function appendOperator(op) {
+            // Convert * to × for display
+            let displayOp = op === '*' ? '×' : op;
+            
+            // If we just calculated a result, start new expression with that result
+            if (justCalculated) {
+                justCalculated = false;
+            }
+            
+            // Replace last operator if expression ends with one
+            if (expression.match(/[\+\-\*\/×]\s*$/)) {
+                expression = expression.replace(/[\+\-\*\/×]\s*$/, '') + ' ' + displayOp + ' ';
+            } else {
+                expression += ' ' + displayOp + ' ';
+            }
+            
+            updateDisplay();
+        }
+
+        function calculate() {
+            // Don't calculate if expression ends with operator
+            if (expression.match(/[\+\-\*\/×]\s*$/)) {
+                return;
+            }
+
+            // Don't recalculate if already showing just a result
+            if (justCalculated) {
+                return;
+            }
+
+            try {
+                // Replace × with * for calculation
+                let calcExpression = expression.replace(/×/g, '*');
+                
+                // Check for division by zero
+                if (calcExpression.match(/\/\s*0($|\s)/)) {
+                    expression = 'Error: Division by zero';
+                    updateDisplay();
+                    setTimeout(() => {
+                        clearDisplay();
+                    }, 2000);
+                    return;
+                }
+
+                // Calculate the result
+                let result = eval(calcExpression);
+                
+                // Format result if too long
+                if (result.toString().length > 12) {
+                    result = parseFloat(result.toFixed(8));
+                }
+                
+                // Show only the result (no = sign)
+                expression = result.toString();
+                justCalculated = true;
+                updateDisplay();
+            } catch (error) {
+                expression = 'Error';
+                updateDisplay();
+                setTimeout(() => {
+                    clearDisplay();
+                }, 2000);
+            }
+        }
+
+        function clearDisplay() {
+            expression = '0';
+            justCalculated = false;
+            updateDisplay();
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', function(e) {
+            if (e.key >= '0' && e.key <= '9') {
+                appendNumber(e.key);
+            } else if (e.key === '.') {
+                appendDecimal();
+            } else if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/') {
+                appendOperator(e.key);
+            } else if (e.key === 'Enter' || e.key === '=') {
+                e.preventDefault();
+                calculate();
+            } else if (e.key === 'Escape' || e.key === 'c' || e.key === 'C') {
+                clearDisplay();
+            } else if (e.key === 'Backspace') {
+                e.preventDefault();
+                if (expression.length > 1 && !justCalculated) {
+                    expression = expression.slice(0, -1);
+                    if (expression === '') expression = '0';
+                    updateDisplay();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
